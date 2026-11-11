@@ -1,0 +1,18 @@
+---
+- name: Настроить лабораторные интерфейсы через Netplan
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Записать конфигурацию лабораторных интерфейсов
+      ansible.builtin.template:
+        src: lab-netplan.yaml.j2
+        dest: /etc/netplan/90-vlan-bond-lab.yaml
+        owner: root
+        group: root
+        mode: '0600'
+      notify: Применить настройки Netplan
+
+  handlers:
+    - name: Применить настройки Netplan
+      ansible.builtin.command: netplan apply

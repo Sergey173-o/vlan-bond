@@ -1,0 +1,43 @@
+# Лабораторные адаптеры привязаны к MAC, поэтому eth* и enp* не важны.
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+{% for name, mac in lab_links.items() %}
+    {{ name }}:
+      match:
+        macaddress: "{{ mac }}"
+      set-name: {{ name }}
+      dhcp4: false
+      dhcp6: false
+      link-local: []
+      optional: true
+{% if name == 'office-uplink' %}
+      addresses: [{{ office_ip }}]
+{% endif %}
+{% endfor %}
+{% if vlan_id is defined %}
+  vlans:
+    vlan{{ vlan_id }}:
+      id: {{ vlan_id }}
+      link: testlan
+      addresses: [{{ vlan_ip }}]
+      link-local: []
+{% endif %}
+{% if bond_ip is defined %}
+  bonds:
+    bond0:
+      interfaces: [lab-a, lab-b]
+      addresses: [{{ bond_ip }}]
+      link-local: []
+      parameters:
+        mode: {{ bond_mode }}
+        mii-monitor-interval: 100ms
+{% if bond_mode == '802.3ad' %}
+        lacp-rate: fast
+        min-links: 1
+{% else %}
+        primary: lab-a
+        fail-over-mac-policy: active
+{% endif %}
+{% endif %}
